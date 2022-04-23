@@ -42,7 +42,7 @@ def parser():
             driver.set_window_size(1200, 1200)
             driver.get(os.environ.get('link'))
             m = driver.execute_script("return navigator.userAgent;")
-            print(m)
+            print('true', m)
             body = driver.find_element(By.TAG_NAME, 'tbody')
             for tr in body.find_elements(By.TAG_NAME, 'tr'):
                 game_id, coefficient = tr.get_attribute('data-eventid'), None
