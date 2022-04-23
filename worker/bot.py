@@ -41,10 +41,11 @@ def parser():
             driver = chrome(os.environ.get('local'))
             driver.set_window_size(1200, 1200)
             driver.get(os.environ.get('link'))
-            print(driver.page_source)
+            m = driver.execute_script("return navigator.userAgent;")
+            print(m)
             body = driver.find_element(By.TAG_NAME, 'tbody')
             for tr in body.find_elements(By.TAG_NAME, 'tr'):
-                game_id, coefficient = tr.get_attribute('data-eventid'), ''
+                game_id, coefficient = tr.get_attribute('data-eventid'), None
                 bet = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__bet").text
                 title = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__teams").text
                 start_time = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__time").text
@@ -57,7 +58,7 @@ def parser():
                         else:
                             coefficient = odds[2].text
                         if coefficient == '0.00':
-                            coefficient = ''
+                            coefficient = None
 
                 tds = tr.find_elements(By.TAG_NAME, 'td')
                 for td in tds:
@@ -78,7 +79,8 @@ def parser():
                                 'score': score,
                                 'post_id': None,
                                 'start_time': start_stamp,
-                                'coefficient': coefficient})
+                                'coefficient': coefficient,
+                                'post_update': zero_row['post_update']})
             driver.close()
             db.close()
             sleep(300)
