@@ -5,6 +5,7 @@ import gspread
 from SQL import SQL
 from time import sleep
 from chrome import chrome
+from telebot import TeleBot
 from objects import time_now
 from string import ascii_uppercase
 from selenium.webdriver.common.by import By
@@ -28,6 +29,7 @@ db_path = 'db/database.db'
 objects.environmental_files()
 os.makedirs('db', exist_ok=True)
 tz = timezone(timedelta(hours=3))
+bot = TeleBot(os.environ['TOKEN'])
 zero_row, google_rows_ids, main_columns = robo_db_creation()
 Auth = objects.AuthCentre(ID_DEV=-1001312302092, DEV_TOKEN=os.environ['DEV_TOKEN'])
 bets = {'П1': 'П1', 'П2': 'П2', '12': 'Победа (1 или 2)', '1X': 'Двойной исход (1X)', 'X2': 'Двойной исход (X2)'}
@@ -41,8 +43,6 @@ def parser():
             driver = chrome(os.environ.get('local'))
             driver.set_window_size(1200, 1200)
             driver.get(os.environ.get('link'))
-            m = driver.execute_script("return navigator.userAgent;")
-            print('true', m)
             body = driver.find_element(By.TAG_NAME, 'tbody')
             for tr in body.find_elements(By.TAG_NAME, 'tr'):
                 game_id, coefficient = tr.get_attribute('data-eventid'), None
@@ -72,6 +72,7 @@ def parser():
                             now = datetime.now(tz)
                             date_iso = f"{now.strftime('%Y-%m-%d')} {start_time}:00"
                             start_stamp = datetime.fromisoformat(date_iso).timestamp()
+                            coefficient_text = f'КФ: {coefficient}' if coefficient else ''
                             db.create_row({
                                 'bet': bet,
                                 'id': game_id,
@@ -81,6 +82,20 @@ def parser():
                                 'start_time': start_stamp,
                                 'coefficient': coefficient,
                                 'post_update': zero_row['post_update']})
+
+                            text = f"✅✅✅\n" \
+                                   f"⚽ {title}\n" \
+                                   f"🧾 Счёт матча: {score}\n" \
+                                   f"{coefficient_text}" \
+                                   f"💰 Ставка: {bets.get(bet, 'Нет')}"
+
+                            try:
+                                post = bot.send_message(os.environ['channel_id'], text,
+                                                        disable_web_page_preview=True, parse_mode='HTML')
+                                db.update('main', game_id, {'post_id': post.id, 'post_update': time_now()})
+                            except IndexError and Exception:
+                                pass
+
             driver.close()
             db.close()
             sleep(300)
