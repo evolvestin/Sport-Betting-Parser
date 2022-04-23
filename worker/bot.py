@@ -147,15 +147,22 @@ def auto_reboot():
             Auth.dev.thread_except()
 
 
-if __name__ == '__main__':
-    if os.environ.get('local'):
-        threads = [parser]
-        Auth.dev.printer(f'Запуск бота локально за {time_now() - stamp1} сек.')
-    else:
-        Auth.dev.start(stamp1)
-        threads = [auto_reboot, parser]
-        Auth.dev.printer(f'Бот запущен за {time_now() - stamp1} сек.')
+def start(stamp):
+    try:
+        if os.environ.get('local'):
+            threads = [parser]
+            Auth.dev.printer(f'Запуск бота локально за {time_now() - stamp} сек.')
+        else:
+            Auth.dev.start(stamp)
+            threads = [auto_reboot, parser]
+            Auth.dev.printer(f'Бот запущен за {time_now() - stamp} сек.')
 
-    for thread_element in threads:
-        _thread.start_new_thread(thread_element, ())
-    google_update()
+        for thread_element in threads:
+            _thread.start_new_thread(thread_element, ())
+        google_update()
+    except IndexError and Exception:
+        Auth.dev.thread_except()
+
+
+if os.environ.get('local'):
+    start(stamp1)
