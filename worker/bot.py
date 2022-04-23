@@ -41,6 +41,7 @@ def parser():
             driver = chrome(os.environ.get('local'))
             driver.set_window_size(1200, 1200)
             driver.get(os.environ.get('link'))
+            print(driver.find_element('html').text)
             body = driver.find_element(By.TAG_NAME, 'tbody')
             for tr in body.find_elements(By.TAG_NAME, 'tr'):
                 game_id, coefficient = tr.get_attribute('data-eventid'), ''
