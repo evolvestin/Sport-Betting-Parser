@@ -4,8 +4,8 @@ from fake_useragent import UserAgent
 
 
 def chrome(local):
-    agent = UserAgent(use_cache_server=False)
-    print('fake', agent.chrome)
+    # agent = UserAgent(use_cache_server=False)
+    # print('fake', agent.chrome)
     user = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36'
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--no-sandbox')
