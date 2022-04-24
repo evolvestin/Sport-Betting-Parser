@@ -131,6 +131,9 @@ class SQL:
     def get_row(self, row_id: Union[int, str]):
         return self.request(f"SELECT * FROM main WHERE id = '{row_id}'", fetchone=True)
 
+    def get_posts(self):
+        return self.request('SELECT * FROM main WHERE last_update > post_update AND post_id IS NOT NULL')
+
     def create_row(self, row: dict):
         row.update({'last_update': time_now(), 'updates': 1})
         self.request(f'REPLACE INTO main {self.insert(row)}')
