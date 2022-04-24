@@ -70,9 +70,8 @@ def parser():
                                 db.update('main', game_id, {'score': score, 'coefficient': coefficient})
                         else:
                             now = datetime.now(tz)
-                            raw_date = f"{now.strftime('%Y-%m-%d')} {start_time}:00+03:00"
                             coefficient_text = f'КФ: {coefficient}' if coefficient else ''
-                            play_time = datetime.fromisoformat(raw_date) - timedelta(hours=3)
+                            play_time = datetime.fromisoformat(f"{now.strftime('%Y-%m-%d')} {start_time}:00+03:00")
                             db.create_row({
                                 'bet': bet,
                                 'id': game_id,
@@ -86,7 +85,7 @@ def parser():
                             if score == '- : -':
                                 text = f"⏱⏱⏱\n" \
                                        f"⚽ {title}\n" \
-                                       f"⏱ {play_time.strftime('%H:%M')}" \
+                                       f"⏱ {play_time.strftime('%H:%M')}\n" \
                                        f"🧾 Счёт матча: {score}\n" \
                                        f"{coefficient_text}" \
                                        f"💰 Ставка: {bets.get(bet, 'Нет')}"
