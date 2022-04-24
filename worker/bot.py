@@ -68,8 +68,10 @@ def iter_post(record):
 def post_updater():
     while True:
         try:
-            db = SQL(db_path)
-            for record in db.get_posts():
+            db,  = SQL(db_path)
+            records = db.get_posts()
+            print(f"Начало обновления постов: {[i['game_id'] for i in records]}") if len(records) > 0 else None
+            for record in records:
                 update = True
                 try:
                     bot.edit_message_text(chat_id=os.environ['channel_id'],
@@ -82,6 +84,7 @@ def post_updater():
                 if update:
                     db.update('main', record['id'], {'post_update': time_now()})
                 sleep(60)
+            print('Конец обновления постов') if len(records) > 0 else None
             sleep(30)
         except IndexError and Exception:
             Auth.dev.thread_except()
