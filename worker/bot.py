@@ -72,7 +72,7 @@ def post_ender():
             records = db.get_expired(datetime.now(tz) - timedelta(hours=2.5))
             print(f"Заканчиваем посты: {[i['post_id'] for i in records]}") if len(records) > 0 else None
             for record in records:
-                db.update('main', record['id'], {'ended': '✅', 'post_update': 946674000})
+                db.update('main', record['id'], {'ended': '🔒', 'post_update': 946674000})
             db.close()
             sleep(60)
         except IndexError and Exception:
