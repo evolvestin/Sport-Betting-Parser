@@ -240,7 +240,7 @@ def start(stamp):
             Auth.dev.printer(f'Запуск бота локально за {time_now() - stamp} сек.')
         else:
             Auth.dev.start(stamp)
-            threads = [parser, google_update, post_updater]
+            threads = [parser, google_update, post_updater, post_ender]
             Auth.dev.printer(f'Бот запущен за {time_now() - stamp} сек.')
 
         for thread_element in threads:
