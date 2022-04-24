@@ -41,7 +41,7 @@ def iter_post(record):
     now, title = datetime.now(tz), '⏱⏱⏱'
     score = re.sub(r'\(.*?\)', '', record['score']).strip()
     play_time = datetime.fromtimestamp(record['start_time'], tz)
-    coefficient_text = f"КФ: {record['coefficient']}" if record['coefficient'] else ''
+    coefficient_text = f"КФ: {record['coefficient']}\n" if record['coefficient'] else ''
     if score != '- : -' and (play_time + timedelta(hours=2.5)) < now:
         split = [int(re.sub(r'\D', '', element)) or 0 for element in score.split(':')]
         if len(split) == 2:
@@ -59,7 +59,7 @@ def iter_post(record):
     text = f"{title}\n" \
            f"⚽ {record['name']}\n" \
            f"⏱ {play_time.strftime('%H:%M')}\n" \
-           f"🧾 Счёт матча: {bold(record['score'])}\n" \
+           f"🧾 Счёт матча: {bold(score)}\n" \
            f"{coefficient_text}" \
            f"💰 Ставка: {bold(bets.get(record['bet'], 'Нет'))}"
     return text
