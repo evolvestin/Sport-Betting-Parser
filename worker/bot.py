@@ -74,8 +74,9 @@ def post_updater():
                     bot.edit_message_text(chat_id=os.environ['channel_id'],
                                           text=iter_post(record), message_id=record['post_id'],
                                           disable_web_page_preview=True, parse_mode='HTML')
+                    db.update('main', record['id'], {'post_update': time_now()})
                 except IndexError and Exception:
-                    pass
+                    Auth.dev.executive(None)
             sleep(100)
         except IndexError and Exception:
             Auth.dev.thread_except()
