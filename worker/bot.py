@@ -70,21 +70,22 @@ def parser():
                                 db.update('main', game_id, {'score': score, 'coefficient': coefficient})
                         else:
                             now = datetime.now(tz)
-                            date_iso = f"{now.strftime('%Y-%m-%d')} {start_time}:00"
-                            start_stamp = datetime.fromisoformat(date_iso).timestamp()
+                            raw_date = f"{now.strftime('%Y-%m-%d')} {start_time}:00+03:00"
                             coefficient_text = f'КФ: {coefficient}' if coefficient else ''
+                            play_time = datetime.fromisoformat(raw_date) - timedelta(hours=3)
                             db.create_row({
                                 'bet': bet,
                                 'id': game_id,
                                 'name': title,
                                 'score': score,
                                 'post_id': None,
-                                'start_time': start_stamp,
                                 'coefficient': coefficient,
+                                'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']})
 
                             text = f"✅✅✅\n" \
                                    f"⚽ {title}\n" \
+                                   f"⏱ {play_time.strftime('%H:%M')}" \
                                    f"🧾 Счёт матча: {score}\n" \
                                    f"{coefficient_text}" \
                                    f"💰 Ставка: {bets.get(bet, 'Нет')}"
