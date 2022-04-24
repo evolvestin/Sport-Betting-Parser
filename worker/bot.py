@@ -188,6 +188,8 @@ def parser():
                                 'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']}
                             db.create_row(record)
+                            if int(game_id) in [16872256, 16873128]:
+                                print(record)
 
                             if score == '- : -':
                                 text = iter_post(record)
