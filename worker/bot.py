@@ -20,7 +20,7 @@ def robo_db_creation():
     spreadsheet = gspread.service_account('google.json').open('SportBettingDB')
     users = spreadsheet.worksheet('robo').get('A1:Z50000', major_dimension='ROWS')
     raw_columns = db.create_table('main', users.pop(0), additional=True)
-    users_ids, columns = db.upload('main', raw_columns, users)
+    users_ids, columns = db.upload('main', raw_columns, users, delta=3)
     _zero_row = db.get_row(0)
     db.close()
     return _zero_row, ['id', *users_ids], columns
@@ -35,7 +35,8 @@ zero_row, google_rows_ids, main_columns = robo_db_creation()
 Auth = objects.AuthCentre(ID_DEV=-1001312302092, DEV_TOKEN=os.environ['DEV_TOKEN'])
 bets = {'П1': 'П1', 'П2': 'П2', '12': 'Победа (1 или 2)', '1X': 'Двойной исход (1X)', 'X2': 'Двойной исход (X2)'}
 # =================================================================================================================
-print(datetime.now(tz))
+d = open('db/database.db', 'rb')
+bot.send_document('396978030', d)
 
 
 def iter_post(record):

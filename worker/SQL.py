@@ -2,6 +2,7 @@
 import re
 import sqlite3
 from typing import Union
+from datetime import datetime
 from objects import divide, stamper, time_now
 sql_patterns = ['database is locked', 'no such table']
 
@@ -103,7 +104,7 @@ class SQL:
         self.request(f"CREATE TABLE IF NOT EXISTS {table} ({', '.join(columns)})")
         return raw_columns
 
-    def upload(self, table, raw_columns, array):
+    def upload(self, table, raw_columns, array, delta: int = 0):
         all_values, collected_ids = [], []
         keys, _, columns = self.google_columns(raw_columns)
         columns_range = range(0, len(columns))
@@ -115,7 +116,10 @@ class SQL:
                     if 'TEXT' in columns[i] and key[i] == 'None':
                         values.append('NULL')
                     elif 'DATE' in columns[i]:
-                        values.append(f'{stamper(key[i])}')
+                        try:
+                            values.append(str(int(datetime.fromisoformat(f'{key[i]}+0{delta}:00').timestamp())))
+                        except IndexError and Exception:
+                            values.append('NULL')
                     else:
                         values.append(f"'{key[i]}'")
                 all_values.append(f"({', '.join(values)})")
