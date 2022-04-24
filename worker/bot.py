@@ -68,7 +68,7 @@ def iter_post(record):
 def post_updater():
     while True:
         try:
-            db,  = SQL(db_path)
+            db = SQL(db_path)
             records = db.get_posts()
             print(f"Начало обновления постов: {[i['game_id'] for i in records]}") if len(records) > 0 else None
             for record in records:
