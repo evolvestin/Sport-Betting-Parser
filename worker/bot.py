@@ -70,14 +70,18 @@ def post_updater():
         try:
             db = SQL(db_path)
             for record in db.get_posts():
+                update = True
                 try:
                     bot.edit_message_text(chat_id=os.environ['channel_id'],
                                           text=iter_post(record), message_id=record['post_id'],
                                           disable_web_page_preview=True, parse_mode='HTML')
+                    sleep(60)
+                except IndexError and Exception as error:
+                    if 'exactly the same' not in str(error):
+                        update = False
+                        Auth.dev.executive(None)
+                if update:
                     db.update('main', record['id'], {'post_update': time_now()})
-                except IndexError and Exception:
-                    Auth.dev.executive(None)
-            sleep(100)
         except IndexError and Exception:
             Auth.dev.thread_except()
 
