@@ -188,8 +188,6 @@ def parser():
                                 'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']}
                             db.create_row(record)
-                            if int(game_id) in [16872256, 16873128]:
-                                print(record)
 
                             if score == '- : -':
                                 text = iter_post(record)
@@ -199,7 +197,7 @@ def parser():
                                     db.update('main', game_id, {'post_id': post.id, 'post_update': time_now()})
                                     sleep(60)
                                 except IndexError and Exception:
-                                    pass
+                                    Auth.dev.executive(None)
             driver.close()
             db.close()
             sleep(300)
