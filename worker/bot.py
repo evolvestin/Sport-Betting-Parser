@@ -35,8 +35,6 @@ zero_row, google_rows_ids, main_columns = robo_db_creation()
 Auth = objects.AuthCentre(ID_DEV=-1001312302092, DEV_TOKEN=os.environ['DEV_TOKEN'])
 bets = {'П1': 'П1', 'П2': 'П2', '12': 'Победа (1 или 2)', '1X': 'Двойной исход (1X)', 'X2': 'Двойной исход (X2)'}
 # =================================================================================================================
-d = open('db/database.db', 'rb')
-bot.send_document('396978030', d)
 
 
 def iter_post(record):
@@ -197,6 +195,7 @@ def parser():
                                     post = bot.send_message(os.environ['channel_id'], text,
                                                             disable_web_page_preview=True, parse_mode='HTML')
                                     db.update('main', game_id, {'post_id': post.id, 'post_update': time_now()})
+                                    sleep(60)
                                 except IndexError and Exception:
                                     pass
             driver.close()
