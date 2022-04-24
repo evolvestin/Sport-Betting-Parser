@@ -3,7 +3,7 @@ import re
 import sqlite3
 from typing import Union
 from datetime import datetime
-from objects import divide, stamper, time_now
+from objects import divide, time_now
 sql_patterns = ['database is locked', 'no such table']
 
 
@@ -141,4 +141,8 @@ class SQL:
     def create_row(self, row: dict):
         row.update({'last_update': time_now(), 'updates': 1})
         self.request(f'REPLACE INTO main {self.insert(row)}')
+
+    def get_expired(self, now: datetime):
+        return self.request(f'SELECT * FROM main WHERE post_id IS NOT NULL AND '
+                            f'ended IS NULL AND {int(now.timestamp())} > start_time')
     # ------------------------------------------------------------------------------------------ MAIN TABLE END

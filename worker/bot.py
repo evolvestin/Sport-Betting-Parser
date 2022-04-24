@@ -42,9 +42,6 @@ def iter_post(record):
     score = re.sub(r'\(.*?\)', '', record['score']).strip()
     play_time = datetime.fromtimestamp(record['start_time'], tz)
     coefficient_text = f"КФ: {record['coefficient']}\n" if record['coefficient'] else ''
-    print('play_time', play_time)
-    print('play_time + 2.5', play_time + timedelta(hours=2.5))
-    print('now', now)
     if score != '- : -' and (play_time + timedelta(hours=2.5)) < now:
         split = [int(re.sub(r'\D', '', element)) or 0 for element in score.split(':')]
         if len(split) == 2:
@@ -68,6 +65,20 @@ def iter_post(record):
     return text
 
 
+def post_ender():
+    while True:
+        try:
+            db = SQL(db_path)
+            records = db.get_expired(datetime.now(tz) - timedelta(hours=2.5))
+            print(f"Заканчиваем посты: {[i['post_id'] for i in records]}") if len(records) > 0 else None
+            for record in records:
+                db.update('main', record['id'], {'ended': '✅', 'post_update': 946674000})
+            db.close()
+            sleep(60)
+        except IndexError and Exception:
+            Auth.dev.thread_except()
+
+
 def post_updater():
     while True:
         try:
@@ -81,13 +92,16 @@ def post_updater():
                                           text=iter_post(record), message_id=record['post_id'],
                                           disable_web_page_preview=True, parse_mode='HTML')
                 except IndexError and Exception as error:
+                    update = False
                     if 'exactly the same' not in str(error):
-                        update = False
                         Auth.dev.executive(None)
+                    else:
+                        update = True
                 if update:
                     db.update('main', record['id'], {'post_update': time_now()})
                     print(f"Пост обновлен: {record['post_id']} ({record['id']})")
-                sleep(60)
+                sleep(25)
+            db.close()
             sleep(5)
         except IndexError and Exception:
             Auth.dev.thread_except()
@@ -151,6 +165,7 @@ def google_update():
                     db.update('main', record['id'], {'updates': 0}, True)
                     Auth.dev.printer(f"Запись {text} {record['id']}")
                     sleep(1)
+            db.close()
         except IndexError and Exception:
             Auth.dev.thread_except()
 
@@ -194,6 +209,7 @@ def parser():
                                 'bet': bet,
                                 'id': game_id,
                                 'name': title,
+                                'ended': None,
                                 'score': score,
                                 'post_id': None,
                                 'coefficient': coefficient,
