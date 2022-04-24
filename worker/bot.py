@@ -42,6 +42,9 @@ def iter_post(record):
     score = re.sub(r'\(.*?\)', '', record['score']).strip()
     play_time = datetime.fromtimestamp(record['start_time'], tz)
     coefficient_text = f"КФ: {record['coefficient']}\n" if record['coefficient'] else ''
+    print('play_time', play_time)
+    print('play_time + 2.5', play_time + timedelta(hours=2.5))
+    print('now', now)
     if score != '- : -' and (play_time + timedelta(hours=2.5)) < now:
         split = [int(re.sub(r'\D', '', element)) or 0 for element in score.split(':')]
         if len(split) == 2:
