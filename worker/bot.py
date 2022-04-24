@@ -83,19 +83,20 @@ def parser():
                                 'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']})
 
-                            text = f"✅✅✅\n" \
-                                   f"⚽ {title}\n" \
-                                   f"⏱ {play_time.strftime('%H:%M')}" \
-                                   f"🧾 Счёт матча: {score}\n" \
-                                   f"{coefficient_text}" \
-                                   f"💰 Ставка: {bets.get(bet, 'Нет')}"
+                            if score == '- : -':
+                                text = f"⏱⏱⏱\n" \
+                                       f"⚽ {title}\n" \
+                                       f"⏱ {play_time.strftime('%H:%M')}" \
+                                       f"🧾 Счёт матча: {score}\n" \
+                                       f"{coefficient_text}" \
+                                       f"💰 Ставка: {bets.get(bet, 'Нет')}"
 
-                            try:
-                                post = bot.send_message(os.environ['channel_id'], text,
-                                                        disable_web_page_preview=True, parse_mode='HTML')
-                                db.update('main', game_id, {'post_id': post.id, 'post_update': time_now()})
-                            except IndexError and Exception:
-                                pass
+                                try:
+                                    post = bot.send_message(os.environ['channel_id'], text,
+                                                            disable_web_page_preview=True, parse_mode='HTML')
+                                    db.update('main', game_id, {'post_id': post.id, 'post_update': time_now()})
+                                except IndexError and Exception:
+                                    pass
 
             driver.close()
             db.close()
