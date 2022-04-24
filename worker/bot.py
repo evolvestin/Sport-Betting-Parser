@@ -70,7 +70,7 @@ def post_updater():
         try:
             db = SQL(db_path)
             records = db.get_posts()
-            print(f"Начало обновления постов: {[i['game_id'] for i in records]}") if len(records) > 0 else None
+            print(f"Начало обновления постов: {[i['id'] for i in records]}") if len(records) > 0 else None
             for record in records:
                 update = True
                 try:
