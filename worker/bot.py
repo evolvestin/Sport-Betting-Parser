@@ -70,7 +70,7 @@ def post_updater():
         try:
             db = SQL(db_path)
             records = db.get_posts()
-            print(f"Начало обновления постов: {[i['id'] for i in records]}") if len(records) > 0 else None
+            print(f"Обновляем посты: {[i['post_id'] for i in records]}") if len(records) > 0 else None
             for record in records:
                 update = True
                 try:
@@ -83,9 +83,9 @@ def post_updater():
                         Auth.dev.executive(None)
                 if update:
                     db.update('main', record['id'], {'post_update': time_now()})
+                    print(f"Пост обновлен: {record['post_id']} ({record['id']})")
                 sleep(60)
-            print('Конец обновления постов') if len(records) > 0 else None
-            sleep(30)
+            sleep(5)
         except IndexError and Exception:
             Auth.dev.thread_except()
 
