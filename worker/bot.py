@@ -50,7 +50,7 @@ def iter_post(record):
             elif record['bet'] == 'П2':
                 title = '✅✅✅' if split[1] > split[0] else '❌❌❌'
             elif record['bet'] == '1X':
-                title = '✅✅✅' if split[1] >= split[0] else '❌❌❌'
+                title = '✅✅✅' if split[0] >= split[1] else '❌❌❌'
             elif record['bet'] == 'X2':
                 title = '✅✅✅' if split[1] >= split[0] else '❌❌❌'
             else:
