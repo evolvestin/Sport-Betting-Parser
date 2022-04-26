@@ -43,7 +43,7 @@ def iter_post(record):
     play_time = datetime.fromtimestamp(record['start_time'], tz)
     coefficient_text = f"КФ: {record['coefficient']}\n" if record['coefficient'] else ''
     if score != '- : -' and (play_time + timedelta(hours=2.5)) < now:
-        split = [int(re.sub(r'\D', '', element)) or 0 for element in score.split(':')]
+        split = [int(re.sub(r'\D', '', element) or '0') for element in score.split(':')]
         if len(split) == 2:
             if record['bet'] == 'П1':
                 title = '✅✅✅' if split[0] > split[1] else '❌❌❌'
@@ -93,7 +93,7 @@ def post_updater():
                                           disable_web_page_preview=True, parse_mode='HTML')
                 except IndexError and Exception as error:
                     update = False
-                    if 'exactly the same' not in str(error):
+                    if 'exactly the same' not in str(error) and 'message to edit not found' not in str(error):
                         Auth.dev.executive(None)
                     else:
                         update = True
@@ -203,7 +203,7 @@ def parser():
                             if record['score'] != score or record['coefficient'] != coefficient:
                                 db.update('main', game_id, {'score': score, 'coefficient': coefficient})
                         else:
-                            now = datetime.now(tz)
+                            now, update = datetime.now(tz), None
                             play_time = datetime.fromisoformat(f"{now.strftime('%Y-%m-%d')} {start_time}:00+03:00")
                             record = {
                                 'bet': bet,
@@ -215,17 +215,18 @@ def parser():
                                 'coefficient': coefficient,
                                 'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']}
-                            db.create_row(record)
+                            db.create_row(record, google_update=False)
 
                             if score == '- : -':
-                                text = iter_post(record)
                                 try:
+                                    text = iter_post(record)
                                     post = bot.send_message(os.environ['channel_id'], text,
                                                             disable_web_page_preview=True, parse_mode='HTML')
-                                    db.update('main', game_id, {'post_id': post.id, 'post_update': time_now()})
+                                    update = {'post_id': post.id, 'post_update': time_now()}
                                     sleep(60)
                                 except IndexError and Exception:
                                     Auth.dev.executive(None)
+                            db.update('main', game_id, update)
             driver.close()
             db.close()
             sleep(300)

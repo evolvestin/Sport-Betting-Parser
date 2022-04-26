@@ -138,11 +138,12 @@ class SQL:
     def get_posts(self):
         return self.request('SELECT * FROM main WHERE last_update > post_update AND post_id IS NOT NULL')
 
-    def create_row(self, row: dict):
-        row.update({'last_update': time_now(), 'updates': 1})
-        self.request(f'REPLACE INTO main {self.insert(row)}')
-
     def get_expired(self, now: datetime):
         return self.request(f'SELECT * FROM main WHERE post_id IS NOT NULL AND '
                             f'ended IS NULL AND {int(now.timestamp())} > start_time')
+
+    def create_row(self, row: dict, google_update=True):
+        row.update({'last_update': time_now()})
+        row.update({'updates': 1}) if google_update else None
+        self.request(f'REPLACE INTO main {self.insert(row)}')
     # ------------------------------------------------------------------------------------------ MAIN TABLE END
