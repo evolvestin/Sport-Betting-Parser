@@ -171,7 +171,7 @@ def parser():
         try:
             counter += 1
             driver = chrome(os.environ.get('local'))
-            handler(driver, True if counter % 4 == 0 else False)
+            handler(driver, old=counter % 4 == 0)
             driver.close()
             sleep(300)
         except IndexError and Exception:
