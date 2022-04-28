@@ -167,19 +167,6 @@ def handler(driver: chrome, old: bool = False):
     db.close()
 
 
-def parser():
-    counter = 0
-    while True:
-        try:
-            counter += 1
-            driver = chrome(os.environ.get('local'))
-            handler(driver, old=counter % 4 == 0)
-            driver.close()
-            sleep(300)
-        except IndexError and Exception:
-            Auth.dev.thread_except()
-
-
 def post_ender():
     while True:
         try:
@@ -210,6 +197,28 @@ def auto_reboot():
                 text, _ = Auth.logs.reboot()
                 Auth.dev.printer(text)
         except IndexError and Exception:
+            Auth.dev.thread_except()
+
+
+def parser():
+    counter = 0
+    while True:
+        try:
+            driver = chrome(os.environ.get('local'))
+        except IndexError and Exception:
+            driver = None
+            Auth.dev.thread_except()
+
+        try:
+            counter += 1
+            handler(driver, old=counter % 4 == 0) if driver else None
+            driver.close() if driver else None
+            sleep(300)
+        except IndexError and Exception:
+            try:
+                driver.close() if driver else None
+            except IndexError and Exception:
+                pass
             Auth.dev.thread_except()
 
 
