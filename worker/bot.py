@@ -222,7 +222,7 @@ def parser():
                                     'coefficient_1': coefficient_1,
                                     'coefficient_2': coefficient_2})
                         else:
-                            now, update = datetime.now(tz), None
+                            now, update = datetime.now(tz), {}
                             posting = True if score == '- : -' else None
                             play_time = datetime.fromisoformat(f"{now.strftime('%Y-%m-%d')} {start_time}:00+03:00")
                             record = {
