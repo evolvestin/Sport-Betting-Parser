@@ -215,6 +215,7 @@ def parser():
                                     'coefficient': coefficient})
                         else:
                             now, update = datetime.now(tz), None
+                            posting = True if score == '- : -' else None
                             play_time = datetime.fromisoformat(f"{now.strftime('%Y-%m-%d')} {start_time}:00+03:00")
                             record = {
                                 'bet': bet,
@@ -229,8 +230,13 @@ def parser():
                                 'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']}
                             db.create_row(record, google_update=False)
+                            try:
+                                fl_coefficient = float(coefficient) if coefficient else None
+                                posting = posting if fl_coefficient >= 1.4 else None
+                            except IndexError and Exception:
+                                pass
 
-                            if score == '- : -':
+                            if posting:
                                 try:
                                     text = iter_post(record)
                                     post = bot.send_message(os.environ['channel_id'], text,
