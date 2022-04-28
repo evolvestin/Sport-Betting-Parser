@@ -67,6 +67,8 @@ def iter_post(record):
                 title = '✅✅✅' if split[1] >= split[0] else '❌❌❌'
             else:
                 title = '✅✅✅' if split[0] != split[1] else '❌❌❌'
+        elif score == 'отм':
+            score, title = 'Отменён', '⚠⚠⚠'
 
     text = f"{title}\n" \
            f"⚽ {record['name']}\n" \
