@@ -174,13 +174,16 @@ def parser():
 
 
 def old_parser():
+    starting = True
     while True:
         try:
-            sleep(100)
+            if starting:
+                sleep(150)
+                starting = False
             driver = chrome(os.environ.get('local'))
             handler(driver, old=True)
             driver.close()
-            sleep(1100)
+            sleep(1200)
         except IndexError and Exception:
             Auth.dev.thread_except()
 
