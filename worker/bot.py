@@ -179,10 +179,10 @@ def parser():
             driver.get(os.environ.get('link'))
             body = driver.find_element(By.TAG_NAME, 'tbody')
             for tr in body.find_elements(By.TAG_NAME, 'tr'):
-                game_id, coefficient = tr.get_attribute('data-eventid'), None
                 bet = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__bet").text
                 title = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__teams").text
                 start_time = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__time").text
+                game_id, percent_1, percent_2, coefficient = tr.get_attribute('data-eventid'), None, None, None
 
                 if bet in ['П1', 'П2']:
                     odds = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__odd")
@@ -193,6 +193,11 @@ def parser():
                             coefficient = odds[2].text
                         if coefficient == '0.00':
                             coefficient = None
+                elif bet == '12':
+                    percents_raw = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__percent")
+                    percents = [percent.text for percent in percents_raw]
+                    if len(percents) == 3:
+                        percent_1, percent_2 = percents[0], percents[2]
 
                 tds = tr.find_elements(By.TAG_NAME, 'td')
                 for td in tds:
@@ -200,8 +205,14 @@ def parser():
                     if score:
                         record = db.get_row(game_id)
                         if record:
-                            if record['score'] != score or record['coefficient'] != coefficient:
-                                db.update('main', game_id, {'score': score, 'coefficient': coefficient})
+                            if record['score'] != score or record['coefficient'] != coefficient or \
+                                    record['percent_1'] != percent_1 or record['percent_2'] != percent_2:
+                                db.update('main', game_id, {
+                                    'name': title,
+                                    'score': score,
+                                    'percent_1': percent_1,
+                                    'percent_2': percent_2,
+                                    'coefficient': coefficient})
                         else:
                             now, update = datetime.now(tz), None
                             play_time = datetime.fromisoformat(f"{now.strftime('%Y-%m-%d')} {start_time}:00+03:00")
@@ -212,6 +223,8 @@ def parser():
                                 'ended': None,
                                 'score': score,
                                 'post_id': None,
+                                'percent_1': percent_1,
+                                'percent_2': percent_2,
                                 'coefficient': coefficient,
                                 'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']}
