@@ -182,7 +182,12 @@ def parser():
                 bet = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__bet").text
                 title = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__teams").text
                 start_time = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__time").text
+                percents_raw = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__percent")
                 game_id, percent_1, percent_2, coefficient = tr.get_attribute('data-eventid'), None, None, None
+
+                percents = [percent.text for percent in percents_raw]
+                if len(percents) == 3:
+                    percent_1, percent_2 = percents[0], percents[2]
 
                 if bet in ['П1', 'П2']:
                     odds = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__odd")
@@ -193,11 +198,6 @@ def parser():
                             coefficient = odds[2].text
                         if coefficient == '0.00':
                             coefficient = None
-                elif bet == '12':
-                    percents_raw = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__percent")
-                    percents = [percent.text for percent in percents_raw]
-                    if len(percents) == 3:
-                        percent_1, percent_2 = percents[0], percents[2]
 
                 tds = tr.find_elements(By.TAG_NAME, 'td')
                 for td in tds:
