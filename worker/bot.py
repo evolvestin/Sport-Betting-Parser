@@ -11,6 +11,8 @@ from objects import bold, time_now
 from string import ascii_uppercase
 from selenium.webdriver.common.by import By
 from datetime import datetime, timezone, timedelta
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
 # =================================================================================================================
 stamp1 = time_now()
 
@@ -79,6 +81,7 @@ def handler(driver: chrome, old: bool = False):
     db = SQL('db/database.db')
     driver.set_window_size(1200, 1200)
     driver.get(os.environ.get('link'))
+    WebDriverWait(driver, 20).until(ec.presence_of_element_located((By.TAG_NAME, 'tbody')))
     body = driver.find_element(By.TAG_NAME, 'tbody')
 
     if old:
@@ -163,27 +166,14 @@ def handler(driver: chrome, old: bool = False):
 
 
 def parser():
+    counter = 0
     while True:
         try:
+            counter += 1
             driver = chrome(os.environ.get('local'))
-            handler(driver)
+            handler(driver, True if counter % 4 == 0 else False)
             driver.close()
             sleep(300)
-        except IndexError and Exception:
-            Auth.dev.thread_except()
-
-
-def old_parser():
-    starting = True
-    while True:
-        try:
-            if starting:
-                sleep(150)
-                starting = False
-            driver = chrome(os.environ.get('local'))
-            handler(driver, old=True)
-            driver.close()
-            sleep(1200)
         except IndexError and Exception:
             Auth.dev.thread_except()
 
@@ -300,7 +290,7 @@ def start(stamp):
             Auth.dev.printer(f'Запуск бота локально за {time_now() - stamp} сек.')
         else:
             Auth.dev.start(stamp)
-            threads = [parser, old_parser, google_update, post_updater, post_ender]
+            threads = [parser, google_update, post_updater, post_ender]
             Auth.dev.printer(f'Бот запущен за {time_now() - stamp} сек.')
 
         for thread_element in threads:
