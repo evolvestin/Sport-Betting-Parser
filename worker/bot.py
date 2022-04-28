@@ -38,10 +38,20 @@ bets = {'П1': 'П1', 'П2': 'П2', '12': 'Победа (1 или 2)', '1X': 'Д
 
 
 def iter_post(record):
-    now, title = datetime.now(tz), '⏱⏱⏱'
     score = re.sub(r'\(.*?\)', '', record['score']).strip()
+    now, title, coefficient_text = datetime.now(tz), '⏱⏱⏱', ''
     play_time = datetime.fromtimestamp(record['start_time'], tz)
-    coefficient_text = f"КФ: {record['coefficient']}\n" if record['coefficient'] else ''
+
+    if record['bet'] == '12':
+        percent_1 = int(re.sub(r'\D', '', str(record['percent_1'])) or '0')
+        percent_2 = int(re.sub(r'\D', '', str(record['percent_2'])) or '0')
+        if percent_1 != percent_2:
+            record['bet'] = 'П1' if percent_1 > percent_2 else 'П2'
+
+    if record['bet'] in ['П1', 'П2']:
+        key = re.sub(r'\D', '', record['bet'])
+        coefficient_text = f"КФ: {record[f'coefficient_{key}']}\n" if record[f'coefficient_{key}'] else ''
+
     if score != '- : -' and (play_time + timedelta(hours=2.5)) < now:
         split = [int(re.sub(r'\D', '', element) or '0') for element in score.split(':')]
         if len(split) == 2:
@@ -179,25 +189,20 @@ def parser():
             driver.get(os.environ.get('link'))
             body = driver.find_element(By.TAG_NAME, 'tbody')
             for tr in body.find_elements(By.TAG_NAME, 'tr'):
+                coefficient_1, coefficient_2 = None, None
+                odds = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__odd")
                 bet = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__bet").text
+                game_id, percent_1, percent_2 = tr.get_attribute('data-eventid'), None, None
                 title = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__teams").text
+                percents = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__percent")
                 start_time = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__time").text
-                percents_raw = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__percent")
-                game_id, percent_1, percent_2, coefficient = tr.get_attribute('data-eventid'), None, None, None
 
-                percents = [percent.text for percent in percents_raw]
                 if len(percents) == 3:
-                    percent_1, percent_2 = percents[0], percents[2]
+                    percent_1, percent_2 = percents[0].text or None, percents[2].text or None
 
-                if bet in ['П1', 'П2']:
-                    odds = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__odd")
-                    if len(odds) == 3:
-                        if bet == 'П1':
-                            coefficient = odds[0].text
-                        else:
-                            coefficient = odds[2].text
-                        if coefficient == '0.00':
-                            coefficient = None
+                if len(odds) == 3:
+                    coefficient_1 = odds[0].text if odds[0].text != '0.00' else None
+                    coefficient_2 = odds[2].text if odds[2].text != '0.00' else None
 
                 tds = tr.find_elements(By.TAG_NAME, 'td')
                 for td in tds:
@@ -205,14 +210,17 @@ def parser():
                     if score:
                         record = db.get_row(game_id)
                         if record:
-                            if record['score'] != score or record['coefficient'] != coefficient or \
+                            if record['score'] != score or \
+                                    record['coefficient_1'] != coefficient_1 or \
+                                    record['coefficient_2'] != coefficient_2 or \
                                     record['percent_1'] != percent_1 or record['percent_2'] != percent_2:
                                 db.update('main', game_id, {
                                     'name': title,
                                     'score': score,
                                     'percent_1': percent_1,
                                     'percent_2': percent_2,
-                                    'coefficient': coefficient})
+                                    'coefficient_1': coefficient_1,
+                                    'coefficient_2': coefficient_2})
                         else:
                             now, update = datetime.now(tz), None
                             posting = True if score == '- : -' else None
@@ -226,11 +234,14 @@ def parser():
                                 'post_id': None,
                                 'percent_1': percent_1,
                                 'percent_2': percent_2,
-                                'coefficient': coefficient,
+                                'coefficient_1': coefficient_1,
+                                'coefficient_2': coefficient_2,
                                 'start_time': play_time.timestamp(),
                                 'post_update': zero_row['post_update']}
                             db.create_row(record, google_update=False)
                             try:
+                                coefficient = coefficient_1 if bet == 'П1' else None
+                                coefficient = coefficient_2 if bet == 'П2' else coefficient
                                 fl_coefficient = float(coefficient) if coefficient else None
                                 posting = posting if fl_coefficient >= 1.4 else None
                             except IndexError and Exception:
