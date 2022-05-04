@@ -41,16 +41,23 @@ bets = {'П1': 'П1', 'П2': 'П2', '12': 'Победа (1 или 2)', '1X': 'Д
 
 def iter_post(record):
     score = re.sub(r'\(.*?\)', '', record['score']).strip()
-    now, title, coefficient_text = datetime.now(tz), '⏱⏱⏱', ''
     play_time = datetime.fromtimestamp(record['start_time'], tz)
+    now, title, alt_bet, coefficient_text = datetime.now(tz), '⏱⏱⏱', '', ''
+    percents = {n: int(re.sub(r'\D', '', str(record[f'percent_{n}'])) or '0') for n in ['1', '2', 'x']}
 
-    if record['bet'] == '12':
-        percent_1 = int(re.sub(r'\D', '', str(record['percent_1'])) or '0')
-        percent_2 = int(re.sub(r'\D', '', str(record['percent_2'])) or '0')
-        if percent_1 != percent_2:
-            record['bet'] = 'П1' if percent_1 > percent_2 else 'П2'
+    if record['bet'] == '12' and percents['1'] != percents['2']:
+        record['bet'] = 'П1' if percents['1'] > percents['2'] else 'П2'
 
-    if record['bet'] in ['П1', 'П2']:
+    elif record['bet'] in ['1X', 'X2']:
+        key = re.sub(r'\D', '', record['bet'])
+        win_coefficient = record[f'coefficient_{key}'] or ''
+        record['bet'] = 'П1' if record['bet'] == '1X' else 'П2'
+        alt_bet += f" {bold(f'({percents[key]}%)')}" if percents[key] else ''
+        alt_bet += f"\n💰 Ставка: Ничья ({percents['x']}%)" if percents['x'] else ''
+        coefficient_text = f"КФ {record['bet']}: {win_coefficient}\n" if win_coefficient else ''
+        coefficient_text += f"КФ Ничья: {record['coefficient_x']}\n" if record['coefficient_x'] else ''
+
+    elif record['bet'] in ['П1', 'П2']:
         key = re.sub(r'\D', '', record['bet'])
         coefficient_text = f"КФ: {record[f'coefficient_{key}']}\n" if record[f'coefficient_{key}'] else ''
 
@@ -75,7 +82,7 @@ def iter_post(record):
            f"⏱ {play_time.strftime('%H:%M')}\n" \
            f"🧾 Счёт матча: {bold(score)}\n" \
            f"{coefficient_text}" \
-           f"💰 Ставка: {bold(bets.get(record['bet'], 'Нет'))}"
+           f"💰 Ставка: {bold(bets.get(record['bet'], 'Нет'))}{alt_bet}"
     return text
 
 
@@ -95,19 +102,22 @@ def handler(driver: chrome, old: bool = False):
         sleep(5)
 
     for tr in body.find_elements(By.TAG_NAME, 'tr'):
-        coefficient_1, coefficient_2 = None, None
+        coefficient_1, coefficient_2, coefficient_x = None, None, None
         odds = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__odd")
         bet = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__bet").text
-        game_id, percent_1, percent_2 = tr.get_attribute('data-eventid'), None, None
         title = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__teams").text
         percents = tr.find_elements(By.CLASS_NAME, f"{os.environ.get('tag1')}__percent")
         start_time = tr.find_element(By.CLASS_NAME, f"{os.environ.get('tag1')}__time").text
+        game_id, percent_1, percent_2, percent_x = tr.get_attribute('data-eventid'), None, None, None
 
         if len(percents) == 3:
-            percent_1, percent_2 = percents[0].text or None, percents[2].text or None
+            percent_1 = percents[0].text or None
+            percent_x = percents[1].text or None
+            percent_2 = percents[2].text or None
 
         if len(odds) == 3:
             coefficient_1 = odds[0].text if odds[0].text != '0.00' else None
+            coefficient_x = odds[1].text if odds[1].text != '0.00' else None
             coefficient_2 = odds[2].text if odds[2].text != '0.00' else None
 
         tds = tr.find_elements(By.TAG_NAME, 'td')
@@ -117,15 +127,20 @@ def handler(driver: chrome, old: bool = False):
                 record = db.get_row(game_id)
                 if record:
                     if record['score'] != score or \
+                            record['percent_1'] != percent_1 or \
+                            record['percent_x'] != percent_x or \
+                            record['percent_2'] != percent_2 or \
                             record['coefficient_1'] != coefficient_1 or \
-                            record['coefficient_2'] != coefficient_2 or \
-                            record['percent_1'] != percent_1 or record['percent_2'] != percent_2:
+                            record['coefficient_x'] != coefficient_x or \
+                            record['coefficient_2'] != coefficient_2:
                         db.update('main', game_id, {
                             'name': title,
                             'score': score,
                             'percent_1': percent_1,
+                            'percent_x': percent_x,
                             'percent_2': percent_2,
                             'coefficient_1': coefficient_1,
+                            'coefficient_x': coefficient_x,
                             'coefficient_2': coefficient_2})
                 else:
                     if old is False:
@@ -140,8 +155,10 @@ def handler(driver: chrome, old: bool = False):
                             'score': score,
                             'post_id': None,
                             'percent_1': percent_1,
+                            'percent_x': percent_x,
                             'percent_2': percent_2,
                             'coefficient_1': coefficient_1,
+                            'coefficient_x': coefficient_x,
                             'coefficient_2': coefficient_2,
                             'start_time': play_time.timestamp(),
                             'post_update': zero_row['post_update']}
@@ -159,7 +176,7 @@ def handler(driver: chrome, old: bool = False):
                                 text = iter_post(record)
                                 post = bot.send_message(os.environ['channel_id'], text,
                                                         disable_web_page_preview=True, parse_mode='HTML')
-                                update = {'post_id': post.id, 'post_update': time_now()}
+                                update = {'post_id': post.id, 'post_update': time_now(), 'post_status': '👀'}
                                 sleep(60)
                             except IndexError and Exception:
                                 Auth.dev.executive(None)
@@ -174,7 +191,7 @@ def post_ender():
             records = db.get_expired(datetime.now(tz) - timedelta(hours=2.5))
             print(f"Заканчиваем посты: {[i['post_id'] for i in records]}") if len(records) > 0 else None
             for record in records:
-                db.update('main', record['id'], {'ended': '🔒', 'post_update': 946674000})
+                db.update('main', record['id'], {'ended': '🔒', 'post_update': 1262293200})
             db.close()
             sleep(60)
         except IndexError and Exception:
@@ -229,19 +246,22 @@ def post_updater():
             records = db.get_posts()
             print(f"Обновляем посты: {[i['post_id'] for i in records]}") if len(records) > 0 else None
             for record in records:
-                update = True
+                update = {'post_update': time_now(), 'post_status': '👀'}
                 try:
                     bot.edit_message_text(chat_id=os.environ['channel_id'],
                                           text=iter_post(record), message_id=record['post_id'],
                                           disable_web_page_preview=True, parse_mode='HTML')
                 except IndexError and Exception as error:
-                    update = False
+                    update = {}
                     if 'exactly the same' not in str(error) and 'message to edit not found' not in str(error):
                         Auth.dev.executive(None)
                     else:
-                        update = True
+                        update = {'post_update': time_now(), 'post_status': '👀'}
+                        if 'message to edit not found' in str(error):
+                            update.update({'post_status': '🔇'})
+
                 if update:
-                    db.update('main', record['id'], {'post_update': time_now()})
+                    db.update('main', record['id'], update)
                     print(f"Пост обновлен: {record['post_id']} ({record['id']})")
                 sleep(25)
             db.close()
@@ -297,7 +317,7 @@ def google_update():
 def start(stamp):
     try:
         if os.environ.get('local'):
-            threads = [parser]
+            threads = [parser, google_update]
             Auth.dev.printer(f'Запуск бота локально за {time_now() - stamp} сек.')
         else:
             Auth.dev.start(stamp)
