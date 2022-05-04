@@ -164,9 +164,14 @@ def handler(driver: chrome, old: bool = False):
                             'post_update': zero_row['post_update']}
                         db.create_row(record, google_update=False)
                         try:
-                            coefficient = coefficient_1 if bet == 'П1' else None
-                            coefficient = coefficient_2 if bet == 'П2' else coefficient
-                            fl_coefficient = float(coefficient) if coefficient else None
+                            coefficient = None
+                            if bet in ['1X', 'X2']:
+                                coefficient = coefficient_1 if bet == '1X' else coefficient_2
+                            elif bet == '12' and percent_1 != percent_2:
+                                coefficient = coefficient_1 if percents['1'] > percents['2'] else coefficient_2
+                            elif bet in ['П1', 'П2']:
+                                coefficient = coefficient_1 if bet == 'П1' else coefficient_2
+                            fl_coefficient = float(coefficient) if coefficient else 0
                             posting = posting if fl_coefficient >= 1.4 else None
                         except IndexError and Exception:
                             pass
