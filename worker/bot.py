@@ -42,11 +42,16 @@ bets = {'П1': 'П1', 'П2': 'П2', '12': 'Победа (1 или 2)', '1X': 'Д
 def iter_post(record):
     score = re.sub(r'\(.*?\)', '', record['score']).strip()
     play_time = datetime.fromtimestamp(record['start_time'], tz)
-    now, title, alt_bet, coefficient_text = datetime.now(tz), '⏱⏱⏱', '', ''
+    bet, now, title, alt_bet, coefficient_text = record['bet'], datetime.now(tz), '⏱⏱⏱', '', ''
     percents = {n: int(re.sub(r'\D', '', str(record[f'percent_{n}'])) or '0') for n in ['1', '2', 'x']}
 
     if record['bet'] == '12' and percents['1'] != percents['2']:
         record['bet'] = 'П1' if percents['1'] > percents['2'] else 'П2'
+        bet = record['bet']
+
+    elif record['bet'] in ['П1', 'П2']:
+        key = re.sub(r'\D', '', record['bet'])
+        coefficient_text = f"КФ: {record[f'coefficient_{key}']}\n" if record[f'coefficient_{key}'] else ''
 
     elif record['bet'] in ['1X', 'X2']:
         key = re.sub(r'\D', '', record['bet'])
@@ -57,20 +62,16 @@ def iter_post(record):
         coefficient_text = f"КФ {record['bet']}: {win_coefficient}\n" if win_coefficient else ''
         coefficient_text += f"КФ Ничья: {record['coefficient_x']}\n" if record['coefficient_x'] else ''
 
-    elif record['bet'] in ['П1', 'П2']:
-        key = re.sub(r'\D', '', record['bet'])
-        coefficient_text = f"КФ: {record[f'coefficient_{key}']}\n" if record[f'coefficient_{key}'] else ''
-
     if score != '- : -' and (play_time + timedelta(hours=2.5)) < now:
         split = [int(re.sub(r'\D', '', element) or '0') for element in score.split(':')]
         if len(split) == 2:
-            if record['bet'] == 'П1':
+            if bet == 'П1':
                 title = '✅✅✅' if split[0] > split[1] else '❌❌❌'
-            elif record['bet'] == 'П2':
+            elif bet == 'П2':
                 title = '✅✅✅' if split[1] > split[0] else '❌❌❌'
-            elif record['bet'] == '1X':
+            elif bet == '1X':
                 title = '✅✅✅' if split[0] >= split[1] else '❌❌❌'
-            elif record['bet'] == 'X2':
+            elif bet == 'X2':
                 title = '✅✅✅' if split[1] >= split[0] else '❌❌❌'
             else:
                 title = '✅✅✅' if split[0] != split[1] else '❌❌❌'
