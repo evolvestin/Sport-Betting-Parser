@@ -15,6 +15,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 # =================================================================================================================
 stamp1 = time_now()
+html = {'{': '&#123;', '<': '&#60;', '}': '&#125;', '\'': '&#39;'}
+
+
+def html_secure(text, reverse=None):
+    for pattern, value in html.items():
+        text = re.sub(pattern, value, str(text)) if reverse is None else re.sub(value, pattern, str(text))
+    return text
 
 
 def robo_db_creation():
@@ -151,13 +158,13 @@ def handler(driver: chrome, old: bool = False):
                         record = {
                             'bet': bet,
                             'id': game_id,
-                            'name': title,
                             'ended': None,
                             'score': score,
                             'post_id': None,
                             'percent_1': percent_1,
                             'percent_x': percent_x,
                             'percent_2': percent_2,
+                            'name': html_secure(title),
                             'coefficient_1': coefficient_1,
                             'coefficient_x': coefficient_x,
                             'coefficient_2': coefficient_2,
