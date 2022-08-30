@@ -98,6 +98,8 @@ def handler(driver: chrome, old: bool = False):
     db = SQL('db/database.db')
     driver.set_window_size(1200, 1200)
     driver.get(os.environ.get('link'))
+    print(driver.title)
+    print(driver.capabilities)
     try:
         WebDriverWait(driver, 20).until(ec.presence_of_element_located((By.TAG_NAME, 'tbody')))
     except IndexError and Exception:
