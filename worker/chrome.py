@@ -1,7 +1,7 @@
 import os
 from selenium import webdriver
 user_agent = 'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' \
-             'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36'
+             'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36'
 
 
 def chrome(local):
