@@ -219,25 +219,6 @@ def post_ender():
             Auth.dev.thread_except()
 
 
-def auto_reboot():
-    reboot = None
-    while True:
-        try:
-            sleep(30)
-            date = datetime.now(tz)
-            if date.strftime('%H') == '01' and date.strftime('%M') == '59':
-                reboot = True
-                while date.strftime('%M') == '59':
-                    sleep(1)
-                    date = datetime.now(tz)
-            if reboot:
-                reboot = None
-                text, _ = Auth.logs.reboot()
-                Auth.dev.printer(text)
-        except IndexError and Exception:
-            Auth.dev.thread_except()
-
-
 def parser():
     counter = 0
     while True:
@@ -347,7 +328,8 @@ def start(stamp):
 
         for thread_element in threads:
             _thread.start_new_thread(thread_element, ())
-        auto_reboot()
+        while True:
+            sleep(86400)
     except IndexError and Exception:
         Auth.dev.thread_except()
 

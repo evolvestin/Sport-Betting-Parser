@@ -1,5 +1,6 @@
 import os
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 user_agent = 'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' \
              'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36'
 
@@ -14,8 +15,8 @@ def chrome(local):
                    'download.default_directory': os.path.abspath(os.curdir)}
     chrome_options.add_experimental_option('prefs', preferences)
     if local:
-        os.environ['CHROMEDRIVER_PATH'] = 'chromedriver.exe'
+        return webdriver.Chrome(executable_path='chromedriver.exe', options=chrome_options)
     else:
-        chrome_options.binary_location = os.environ.get('GOOGLE_CHROME_BIN')
         chrome_options.add_argument('--headless')
-    return webdriver.Chrome(executable_path=os.environ.get('CHROMEDRIVER_PATH'), options=chrome_options)
+        from webdriver_manager.chrome import ChromeDriverManager
+        return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
